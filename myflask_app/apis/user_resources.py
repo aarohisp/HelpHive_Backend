@@ -1,6 +1,6 @@
 from flask import request, jsonify
 
-def set_user_routes(app):
+def set_user_routes(app): 
     @app.route('/api/test-get', methods=['GET'])
     def test_get():
         data = {"message": "This is a test GET API"}
