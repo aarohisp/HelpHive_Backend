@@ -1,0 +1,1 @@
+#For establishing and handling a MySQL connection.
