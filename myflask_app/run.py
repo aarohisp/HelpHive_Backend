@@ -1,6 +1,4 @@
 #The main entry point.
-
-
 from flask import Flask
 from apis.user_resources import set_user_routes
 
