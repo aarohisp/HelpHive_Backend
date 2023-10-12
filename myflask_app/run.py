@@ -83,8 +83,9 @@
 # if __name__ == '__main__':
 #     app.run(debug=True)
 
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from flask_sqlalchemy import SQLAlchemy
+# from .webpages import login_result
 #from passlib.hash import sha256_crypt
 
 app = Flask(__name__)
@@ -150,9 +151,36 @@ def register():
 
     return jsonify(response)
 
-@app.route('/api/login', methods=["GET"])
+# @app.route('/api/login', methods=["GET"])
+# def login():
+#     data = request.json
+
+#     username = data.get("username")
+#     password = data.get("password")
+
+#     user = UserModel.query.filter_by(username=username).first()
+
+#     if user is None:
+#         response = {"message": "No username", "status": "danger"}
+#     elif password == user.password:
+#         # Successful login
+#         response = {
+#             "message": "You are now logged in!!",
+#             "status": "success",
+#             "uname": user.uname,
+#             "username": user.username,
+#             "email": user.email
+#         }
+#     else:
+#         response = {"message": "Incorrect password", "status": "danger"}
+
+#     return jsonify(response)
+
+from flask import request, jsonify
+
+@app.route('/api/login', methods=["POST"])
 def login():
-    data = request.json
+    data = request.get_json()
 
     username = data.get("username")
     password = data.get("password")
@@ -162,7 +190,14 @@ def login():
     if user is None:
         response = {"message": "No username", "status": "danger"}
     elif password == user.password:
-        response = {"message": "You are now logged in!!", "status": "success"}
+        # Successful login
+        response = {
+            "message": "You are now logged in!!",
+            "status": "success",
+            "uname": user.uname,
+            "username": user.username,
+            "email": user.email
+        }
     else:
         response = {"message": "Incorrect password", "status": "danger"}
 
@@ -175,6 +210,24 @@ def add_user(username, password):
     db.session.commit()
 
     return jsonify({"message": "Added new user!", "status": "success"})
+
+@app.route('/api/get_user_info', methods=['GET'])
+def get_user_info():
+    data = request.json
+
+    username = data.get("username")
+
+    user = UserModel.query.filter_by(username=username).first()
+
+    if user:
+        user_info = {
+            "username": user.username,
+            "uname": user.uname,
+            "email": user.email
+        }
+        return jsonify(user_info)
+    else:
+        return jsonify({"message": "User not found"}, 404)
 
 @app.route('/api/add_product', methods=['GET'])
 def add_product():
@@ -208,7 +261,6 @@ def add_product():
     response = {"message": "Item is registered in the database", "status": "success"}
 
     return jsonify(response)
-
 
 if __name__ == '__main__':
     app.run(debug=True)
