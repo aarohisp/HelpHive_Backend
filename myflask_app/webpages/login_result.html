@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Login Result</title>
+  </head>
+  <body>
+    <h1>{{ message }}</h1>
+    <p>Status: {{ status }}</p>
+    {% if status == 'success' %}
+    <p>Uname: {{ uname }}</p>
+    <p>Username: {{ username }}</p>
+    <p>Email: {{ email }}</p>
+    {% endif %}
+  </body>
+</html>
