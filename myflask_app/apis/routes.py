@@ -1,11 +1,9 @@
-from flask import request, jsonify
+from flask import request, jsonify, current_app
 from app import db
 from database.models import UserModel, ItemModel
 
-# Import your database models and the db instance
-
 def init_routes(app):
-    @app.route('/api/register', methods=['POST'])
+    @app.route('/api/register', methods=['GET'])
     def register():
         data = request.json
 
@@ -14,16 +12,17 @@ def init_routes(app):
         password = data.get("password")
         email = data.get("email")
 
-        # Check if the username already exists
-        user_exists = UserModel.query.filter_by(username=username).first()
+        with current_app.app_context():  # Ensure you're within the application context
+            # Check if the username already exists
+            user_exists = UserModel.query.filter_by(username=username).first()
 
-        if user_exists is None:
-            new_user = UserModel(uname=name, username=username, password=password, email=email)
-            db.session.add(new_user)
-            db.session.commit()
-            response = {"message": "You are registered and can now login", "status": "success"}
-        else:
-            response = {"message": "User already exists, please login or contact admin", "status": "danger"}
+            if user_exists is None:
+                new_user = UserModel(uname=name, username=username, password=password, email=email)
+                db.session.add(new_user)
+                db.session.commit()
+                response = {"message": "You are registered and can now login", "status": "success"}
+            else:
+                response = {"message": "User already exists, please login or contact admin", "status": "danger"}
 
         return jsonify(response)
 
@@ -51,7 +50,7 @@ def init_routes(app):
 
         return jsonify(response)
 
-    @app.route('/api/add_product', methods=['POST'])
+    @app.route('/api/add_product', methods=['GET'])
     def add_product():
         data = request.json
 
@@ -84,10 +83,13 @@ def init_routes(app):
 
         return jsonify(response)
 
-    @app.route('/api/add_user/<username>/<password>', methods=['POST'])
+    @app.route('/api/add_user/<username>/<password>', methods=['GET'])
     def add_user(username, password):
-        user = UserModel(username=username, password=password)
-        db.session.add(user)
-        db.session.commit()
+        with current_app.app_context():  # Ensure you're within the application context
+            user = UserModel(username=username, password=password)
+            db.session.add(user)
+            db.session.commit()
 
-    return jsonify({"message": "Added new user!", "status": "success"})
+        return jsonify({"message": "Added new user!", "status": "success"})
+
+    # return app
