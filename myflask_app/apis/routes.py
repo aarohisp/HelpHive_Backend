@@ -190,6 +190,21 @@ def init_routes(app):
         except Exception as e:
             return jsonify({"message": "An error occurred", "error": str(e), "status": "error"}), 500
 
+    @app.route('/api/search_by_category', methods=['GET'])
+    def search_by_category():
+        category = request.args.get('category')
+
+        if category not in ['clothes', 'medicine', 'medical supplies', 'furniture']:
+            return jsonify({"message": "Invalid category.", "status": "danger"}), 400
+
+        items = ItemModel.query.filter_by(category=category).all()
+
+        if not items:
+            return jsonify({"message": "No items found in this category.", "status": "info"})
+
+        item_list = [{"item_name": item.item_name, "description": item.descriptions} for item in items]
+
+        return jsonify({"items": item_list, "status": "success"})
   
     @app.route('/api/add_user/<username>/<password>', methods=['GET'])
     def add_user(username, password):
