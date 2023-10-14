@@ -81,32 +81,33 @@ def init_routes(app):
         descriptions = data.get("descriptions")
         time_used = data.get("time_used")
         donor_id = data.get("donor_id")
-        category_id = data.get("category_id")
+        category = data.get("category")
         item_address = data.get("item_address")
         image_info = data.get("image_info")
         specification = data.get("specification")
         org_id = data.get("org_id")
 
-        new_item = ItemModel(
-            item_name=item_name,
-            descriptions=descriptions,
-            time_used=time_used,
-            donor_id=donor_id,
-            category_id=category_id,
-            item_address=item_address,
-            image_info=image_info,
-            specification=specification,
-            org_id=org_id
-        )
+        with current_app.app_context():
+            new_item = ItemModel(
+                item_name=item_name,
+                descriptions=descriptions,
+                time_used=time_used,
+                donor_id=donor_id,
+                category=category,
+                item_address=item_address,
+                image_info=image_info,
+                specification=specification,
+                org_id=org_id
+            )
 
-        db.session.add(new_item)
-        db.session.commit()
+            db.session.add(new_item)
+            db.session.commit()
 
-        response = {
-            "message": "Item is registered in the database",
-            "status": "success",
-            "product id": new_item.item_id,
-            "product name": new_item.item_name
+            response = {
+                "message": "Item is registered in the database",
+                "status": "success",
+                "product id": new_item.item_id,
+                "product name": new_item.item_name
             }
 
         return jsonify(response)
@@ -118,12 +119,12 @@ def init_routes(app):
 
             if item:
                 item_data = {
-                    "item_id": item.item_id,  # Use item_id instead of id
+                    "item_id": item.item_id, 
                     "item_name": item.item_name,
                     "descriptions": item.descriptions,
                     "time_used": item.time_used,
                     "donor_id": item.donor_id,
-                    "category_id": item.category_id,
+                    "category": item.category,
                     "item_address": item.item_address,
                     "image_info": item.image_info,
                     "specification": item.specification,
@@ -175,7 +176,7 @@ def init_routes(app):
                     "descriptions": item.descriptions,
                     "time_used": item.time_used,
                     "donor_id": item.donor_id,
-                    "category_id": item.category_id,
+                    "category": item.category,
                     "item_address": item.item_address,
                     "image_info": item.image_info,
                     "specification": item.specification,
@@ -190,6 +191,21 @@ def init_routes(app):
         except Exception as e:
             return jsonify({"message": "An error occurred", "error": str(e), "status": "error"}), 500
 
+    @app.route('/api/search_by_category', methods=['GET'])
+    def search_by_category():
+        category = request.args.get('category')
+
+        if category not in ['clothes', 'medicine', 'medical supplies', 'furniture']:
+            return jsonify({"message": "Invalid category.", "status": "danger"}), 400
+
+        items = ItemModel.query.filter_by(category=category).all()
+
+        if not items:
+            return jsonify({"message": "No items found in this category.", "status": "info"})
+
+        item_list = [{"item_name": item.item_name, "description": item.descriptions} for item in items]
+
+        return jsonify({"items": item_list, "status": "success"})
   
     @app.route('/api/add_user/<username>/<password>', methods=['GET'])
     def add_user(username, password):

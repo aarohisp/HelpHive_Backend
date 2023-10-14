@@ -1,4 +1,5 @@
 from app import db
+from sqlalchemy import Enum
 
 class UserModel(db.Model):
     __tablename__ = 'UserModel'
@@ -13,12 +14,13 @@ class UserModel(db.Model):
 
 class ItemModel(db.Model):
     __tablename__ = 'Item'
+
     item_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     item_name = db.Column(db.String(25), nullable=False)
     descriptions = db.Column(db.String(100), nullable=False)
     time_used = db.Column(db.Integer, nullable=False)
     donor_id = db.Column(db.Integer, db.ForeignKey('UserModel.user_id'), nullable=False)
-    category_id = db.Column(db.Integer, nullable=False)
+    category = db.Column(db.Enum('clothes', 'medicine', 'furniture', 'medical supplies', 'school essentials', 'stationery', name='category_enum'), nullable=False)
     created_at = db.Column(db.TIMESTAMP, server_default=db.func.current_timestamp())
     item_address = db.Column(db.String(100), nullable=False)
     image_info = db.Column(db.String(100), nullable=False)
@@ -26,6 +28,6 @@ class ItemModel(db.Model):
     item_check = db.Column(db.Boolean, default=False)
     status_item = db.Column(db.Enum('open', 'closed', 'expired', name='status_item_enum'), nullable=False, default='open')
     org_id = db.Column(db.Integer, nullable=False)
-
-    # Define a relationship to the UserModel
+    
+    # Define the relationship with UserModel
     donor = db.relationship('UserModel', backref='donated_items', foreign_keys=[donor_id])
