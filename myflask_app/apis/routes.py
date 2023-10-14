@@ -79,10 +79,41 @@ def init_routes(app):
         db.session.add(new_item)
         db.session.commit()
 
-        response = {"message": "Item is registered in the database", "status": "success"}
+        response = {
+            "message": "Item is registered in the database",
+            "status": "success",
+            "product id": new_item.item_id,
+            "product name": new_item.item_name
+            }
 
         return jsonify(response)
 
+    @app.route('/api/get_product/<int:item_id>', methods=['GET'])    
+    def get_product(item_id):
+        try:
+            item = ItemModel.query.get(item_id)
+
+            if item:
+                item_data = {
+                    "item_id": item.item_id,  # Use item_id instead of id
+                    "item_name": item.item_name,
+                    "descriptions": item.descriptions,
+                    "time_used": item.time_used,
+                    "donor_id": item.donor_id,
+                    "category_id": item.category_id,
+                    "item_address": item.item_address,
+                    "image_info": item.image_info,
+                    "specification": item.specification,
+                    "org_id": item.org_id
+                }
+
+                return jsonify({"item": item_data, "status": "success"})
+            else:
+                return jsonify({"message": "Item not found", "status": "error"}), 404
+
+        except Exception as e:
+            return jsonify({"message": "An error occurred", "error": str(e), "status": "error"}), 500
+  
     @app.route('/api/add_user/<username>/<password>', methods=['GET'])
     def add_user(username, password):
         with current_app.app_context():  # Ensure you're within the application context
@@ -90,6 +121,6 @@ def init_routes(app):
             db.session.add(user)
             db.session.commit()
 
-        return jsonify({"message": "Added new user!", "status": "success"})
-
-    # return app
+        return jsonify({
+            "message": "Added new user!",
+             "status": "success"})
