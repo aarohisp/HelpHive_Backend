@@ -8,6 +8,15 @@ class OrgModel(db.Model):
     org_address = db.Column(db.String(255))
     org_contactno = db.Column(db.String(15))
 
+class ImageModel(db.Model):
+    __tablename__ = 'images'
+    image_id = db.Column(db.Integer, primary_key=True)
+    image_data = db.Column(db.LargeBinary)
+    org_id = db.Column(db.Integer, db.ForeignKey('org.org_id'), nullable=False)
+
+    # Define the back reference to the Org table
+    org = db.relationship('OrgModel', backref='images')
+
 class RoleModel(db.Model):
     __tablename__ = 'role'
 

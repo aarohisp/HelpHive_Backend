@@ -1,9 +1,47 @@
-from flask import request, jsonify, current_app
+from flask import request, jsonify, current_app, send_file
 from app import db
 from sqlalchemy import or_
-from database.models import UserModel, ItemModel
+from database.models import UserModel, ItemModel, OrgModel, ImageModel
 import bcrypt
+from io import BytesIO
+from PIL import Image
+
 def init_routes(app):
+
+    @app.route("/api/upload", methods=["POST"])
+    def upload_image():
+        try:
+            # org_id = data.get("org_id")
+            org_id = request.form.get("org_id")
+
+            image_file = request.files["image"]
+            if image_file:
+                image_data = image_file.read()
+                # Set org_id using the org relationship
+                new_image = ImageModel(image_data=image_data, org=OrgModel.query.get(org_id))
+                db.session.add(new_image)
+                db.session.commit()
+                return jsonify({"message": "Image uploaded successfully", "status": "success"})
+            else:
+                return jsonify({"message": "No image provided", "status": "error"})
+        except Exception as e:
+            return jsonify({"message": "An error occurred", "error": str(e), "status": "error"})
+
+    @app.route("/api/images/<int:image_id>", methods=["GET"])
+    def get_image(image_id):
+        try:
+            image = ImageModel.query.get(image_id)
+            if image:
+                image_data = image.image_data
+                image = Image.open(BytesIO(image_data))
+                image_io = BytesIO()
+                image.save(image_io, "JPEG")
+                image_io.seek(0)
+                return send_file(image_io, mimetype="image/jpeg")
+            else:
+                return jsonify({"message": "Image not found", "status": "error"}), 404
+        except Exception as e:
+            return jsonify({"message": "An error occurred", "error": str(e), "status": "error"})
 
     @app.route('/api/register', methods=['POST'])
     def register():
