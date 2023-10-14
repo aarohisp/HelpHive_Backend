@@ -87,26 +87,27 @@ def init_routes(app):
         specification = data.get("specification")
         org_id = data.get("org_id")
 
-        new_item = ItemModel(
-            item_name=item_name,
-            descriptions=descriptions,
-            time_used=time_used,
-            donor_id=donor_id,
-            category=category,
-            item_address=item_address,
-            image_info=image_info,
-            specification=specification,
-            org_id=org_id
-        )
+        with current_app.app_context():
+            new_item = ItemModel(
+                item_name=item_name,
+                descriptions=descriptions,
+                time_used=time_used,
+                donor_id=donor_id,
+                category=category,
+                item_address=item_address,
+                image_info=image_info,
+                specification=specification,
+                org_id=org_id
+            )
 
-        db.session.add(new_item)
-        db.session.commit()
+            db.session.add(new_item)
+            db.session.commit()
 
-        response = {
-            "message": "Item is registered in the database",
-            "status": "success",
-            "product id": new_item.item_id,
-            "product name": new_item.item_name
+            response = {
+                "message": "Item is registered in the database",
+                "status": "success",
+                "product id": new_item.item_id,
+                "product name": new_item.item_name
             }
 
         return jsonify(response)
@@ -118,7 +119,7 @@ def init_routes(app):
 
             if item:
                 item_data = {
-                    "item_id": item.item_id,  # Use item_id instead of id
+                    "item_id": item.item_id, 
                     "item_name": item.item_name,
                     "descriptions": item.descriptions,
                     "time_used": item.time_used,
