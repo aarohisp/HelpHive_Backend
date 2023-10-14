@@ -50,6 +50,28 @@ def init_routes(app):
 
         return jsonify(response)
 
+    @app.route('/api/update_password/<int:user_id>', methods=['PUT'])
+    def update_password(user_id):
+        try:
+            data = request.json
+            new_password = data.get("new_password")
+
+            user = UserModel.query.get(user_id)
+
+            if user:
+                # Update the user's password with the new password
+                user.password = new_password
+                db.session.commit()
+                
+                response = {"message": "Password updated successfully", "status": "success"}
+            else:
+                response = {"message": "User not found", "status": "error"}, 404
+
+            return jsonify(response)
+
+        except Exception as e:
+            return jsonify({"message": "An error occurred", "error": str(e), "status": "error"}), 500
+
     @app.route('/api/add_product', methods=['GET'])
     def add_product():
         data = request.json
