@@ -81,7 +81,7 @@ def init_routes(app):
         descriptions = data.get("descriptions")
         time_used = data.get("time_used")
         donor_id = data.get("donor_id")
-        category_id = data.get("category_id")
+        category = data.get("category")
         item_address = data.get("item_address")
         image_info = data.get("image_info")
         specification = data.get("specification")
@@ -92,7 +92,7 @@ def init_routes(app):
             descriptions=descriptions,
             time_used=time_used,
             donor_id=donor_id,
-            category_id=category_id,
+            category=category,
             item_address=item_address,
             image_info=image_info,
             specification=specification,
@@ -123,7 +123,7 @@ def init_routes(app):
                     "descriptions": item.descriptions,
                     "time_used": item.time_used,
                     "donor_id": item.donor_id,
-                    "category_id": item.category_id,
+                    "category": item.category,
                     "item_address": item.item_address,
                     "image_info": item.image_info,
                     "specification": item.specification,
@@ -175,7 +175,7 @@ def init_routes(app):
                     "descriptions": item.descriptions,
                     "time_used": item.time_used,
                     "donor_id": item.donor_id,
-                    "category_id": item.category_id,
+                    "category": item.category,
                     "item_address": item.item_address,
                     "image_info": item.image_info,
                     "specification": item.specification,

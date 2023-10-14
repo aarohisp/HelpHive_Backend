@@ -27,5 +27,6 @@ class ItemModel(db.Model):
     item_check = db.Column(db.Boolean, default=False)
     status_item = db.Column(Enum('open', 'closed', 'expired', name='status_item_enum'), nullable=False, default='open')
     org_id = db.Column(db.Integer, nullable=False)
+    
     # Define a relationship to the UserModel
     donor = db.relationship('UserModel', backref='donated_items', foreign_keys=[donor_id])
