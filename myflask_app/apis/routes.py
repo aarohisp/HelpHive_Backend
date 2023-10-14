@@ -1,5 +1,6 @@
 from flask import request, jsonify, current_app
 from app import db
+from sqlalchemy import or_
 from database.models import UserModel, ItemModel
 
 def init_routes(app):
@@ -135,6 +136,60 @@ def init_routes(app):
 
         except Exception as e:
             return jsonify({"message": "An error occurred", "error": str(e), "status": "error"}), 500
+    
+    @app.route('/api/search_items', methods=['GET'])
+    def search_items():
+        try:
+            # Get the search query from the request
+            search_query = request.args.get('query')
+
+            # Split the search query into keywords
+            keywords = search_query.split()
+
+            # Create a base query for items
+            query = ItemModel.query
+
+            # Apply filters based on keywords
+            if keywords:
+                # Use the OR condition to search for any keyword in the specified fields
+                query = query.filter(
+                    or_(
+                        *[
+                            ItemModel.item_name.contains(keyword) |
+                            ItemModel.descriptions.contains(keyword) |
+                            ItemModel.specification.contains(keyword)
+                            for keyword in keywords
+                        ]
+                    )
+                )
+
+            # Execute the query and retrieve the items
+            items = query.all()
+
+            # Create a list of item data
+            item_list = []
+            for item in items:
+                item_data = {
+                    "item_id": item.item_id,
+                    "item_name": item.item_name,
+                    "descriptions": item.descriptions,
+                    "time_used": item.time_used,
+                    "donor_id": item.donor_id,
+                    "category_id": item.category_id,
+                    "item_address": item.item_address,
+                    "image_info": item.image_info,
+                    "specification": item.specification,
+                    "org_id": item.org_id,
+                }
+                item_list.append(item_data)
+
+            response = {"items": item_list, "status": "success"}
+
+            return jsonify(response)
+
+        except Exception as e:
+            return jsonify({"message": "An error occurred", "error": str(e), "status": "error"}), 500
+
   
     @app.route('/api/add_user/<username>/<password>', methods=['GET'])
     def add_user(username, password):
