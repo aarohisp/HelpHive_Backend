@@ -50,7 +50,7 @@ def init_routes(app):
         except Exception as e:
             return jsonify({"message": "An error occurred", "error": str(e), "status": "error"})
 
-    @app.route('/api/register', methods=['GET'])
+    @app.route('/api/register', methods=['POST'])
     def register():
         data = request.json
 
@@ -58,13 +58,22 @@ def init_routes(app):
         username = data.get("username")
         password = data.get("password")
         email = data.get("email")
+        role_id = data.get("role_id")
+        org_id = data.get("org_id")
+        phoneno = data.get("phoneno")
+        city = data.get("city")
 
-        with current_app.app_context():  # Ensure you're within the application context
-            # Check if the username already exists
+        # Input validation
+        if not (name and username and password and email and role_id and org_id and phoneno and city):
+            return jsonify({"message": "Missing required fields", "status": "error"})
+
+        with app.app_context():  
             user_exists = UserModel.query.filter_by(username=username).first()
 
             if user_exists is None:
-                new_user = UserModel(uname=name, username=username, password=password, email=email)
+                hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+                new_user = UserModel(uname=name, username=username, password=hashed_password, email=email, role_id=role_id, org_id=org_id, phoneno=phoneno, city=city, is_deleted=False)
                 db.session.add(new_user)
                 db.session.commit()
                 response = {"message": "You are registered and can now login", "status": "success"}
@@ -84,16 +93,17 @@ def init_routes(app):
 
         if user is None:
             response = {"message": "No username", "status": "danger"}
-        elif password == user.password:
-            response = {
-                "message": "You are now logged in!!",
-                "status": "success",
-                "uname": user.uname,
-                "username": user.username,
-                "email": user.email
-            }
         else:
-            response = {"message": "Incorrect password", "status": "danger"}
+            if bcrypt.checkpw(password.encode('utf-8'), user.password):
+                response = {
+                    "message": "You are now logged in!!",
+                    "status": "success",
+                    "name": user.uname,
+                    "username": user.username,
+                    "email": user.email
+                }
+            else:
+                response = {"message": "Incorrect password", "status": "danger"}
 
         return jsonify(response)
     
@@ -106,8 +116,11 @@ def init_routes(app):
             user = UserModel.query.get(user_id)
 
             if user:
+                # Hash the new password before updating
+                hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+                
                 # Update the user's password with the new password
-                user.password = new_password
+                user.password = hashed_password
                 db.session.commit()
                 
                 response = {"message": "Password updated successfully", "status": "success"}

@@ -1,15 +1,34 @@
 from app import db
 from sqlalchemy import Enum
 
+class RoleModel(db.Model):
+    __tablename__ = 'role'
+
+    role_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    role_name = db.Column(db.String(40), nullable=False)
+    description_role = db.Column(db.String(100))
+    org_id = db.Column(db.Integer, db.ForeignKey('org.org_id'), nullable=False)
+
+    org = db.relationship('OrgModel', backref='roles')
+
 class UserModel(db.Model):
     __tablename__ = 'UserModel'
+
     user_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     username = db.Column(db.String(50), unique=True)
     uname = db.Column(db.String(50), unique=True)
-    password = db.Column(db.String(50))  # Ideally, this should be hashed
+    password = db.Column(db.VARBINARY(120)) 
     email = db.Column(db.String(100), unique=True)
+    phoneno = db.Column(db.String(15), nullable=False)
+    city = db.Column(db.String(40), nullable=False)
+    role_id = db.Column(db.Integer, db.ForeignKey('role.role_id'), nullable=False)
+    is_deleted = db.Column(db.Boolean, nullable=False, default=False)
+    org_id = db.Column(db.Integer, db.ForeignKey('org.org_id'), nullable=False)
 
-    def __repr__(self) -> str:
+    role = db.relationship('RoleModel', backref='users')
+    org = db.relationship('OrgModel', backref='users')
+
+    def __repr__(self):
         return f'<User: {self.email}>'
 
 class ItemModel(db.Model):
