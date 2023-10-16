@@ -1,10 +1,56 @@
-from flask import request, jsonify, current_app
+from flask import request, jsonify, current_app, send_file
 from app import db
 from sqlalchemy import or_
-from database.models import UserModel, ItemModel
+from database.models import UserModel, ItemModel, OrgModel, ImageModel
+import bcrypt
+from io import BytesIO
+from PIL import Image
+
 
 def init_routes(app):
-    @app.route('/api/register', methods=['GET'])
+    @app.route("/api/upload", methods=["POST"])
+    def upload_image():
+        try:
+            org_id = request.form.get("org_id")
+
+            image_file = request.files["image"]
+            if image_file:
+                image_data = image_file.read()
+
+                image = Image.open(BytesIO(image_data))
+
+                new_image = ImageModel(image_data=image_data, org=OrgModel.query.get(org_id))
+                db.session.add(new_image)
+                db.session.commit()
+                return jsonify({"message": "Image uploaded successfully", "status": "success"})
+            else:
+                return jsonify({"message": "No image provided", "status": "error"})
+        except Exception as e:
+            return jsonify({"message": "An error occurred", "error": str(e), "status": "error"})
+
+    @app.route("/api/images/<int:image_id>", methods=["GET"])
+    def get_image(image_id):
+        try:
+            image = ImageModel.query.get(image_id)
+            if image:
+                image_data = image.image_data
+
+                # Create an Image object from the image data
+                image = Image.open(BytesIO(image_data))
+
+                # Convert the image to JPEG format
+                image_io = BytesIO()
+                image.save(image_io, format="JPEG")
+                image_io.seek(0)
+
+                # Send the image as a response with the correct MIME type
+                return send_file(image_io, mimetype="image/jpeg")
+            else:
+                return jsonify({"message": "Image not found", "status": "error"}), 404
+        except Exception as e:
+            return jsonify({"message": "An error occurred", "error": str(e), "status": "error"})
+
+    @app.route('/api/register', methods=['POST'])
     def register():
         data = request.json
 
@@ -12,13 +58,22 @@ def init_routes(app):
         username = data.get("username")
         password = data.get("password")
         email = data.get("email")
+        role_id = data.get("role_id")
+        org_id = data.get("org_id")
+        phoneno = data.get("phoneno")
+        city = data.get("city")
 
-        with current_app.app_context():  # Ensure you're within the application context
-            # Check if the username already exists
+        # Input validation
+        if not (name and username and password and email and role_id and org_id and phoneno and city):
+            return jsonify({"message": "Missing required fields", "status": "error"})
+
+        with app.app_context():  
             user_exists = UserModel.query.filter_by(username=username).first()
 
             if user_exists is None:
-                new_user = UserModel(uname=name, username=username, password=password, email=email)
+                hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+                new_user = UserModel(uname=name, username=username, password=hashed_password, email=email, role_id=role_id, org_id=org_id, phoneno=phoneno, city=city, is_deleted=False)
                 db.session.add(new_user)
                 db.session.commit()
                 response = {"message": "You are registered and can now login", "status": "success"}
@@ -38,16 +93,17 @@ def init_routes(app):
 
         if user is None:
             response = {"message": "No username", "status": "danger"}
-        elif password == user.password:
-            response = {
-                "message": "You are now logged in!!",
-                "status": "success",
-                "uname": user.uname,
-                "username": user.username,
-                "email": user.email
-            }
         else:
-            response = {"message": "Incorrect password", "status": "danger"}
+            if bcrypt.checkpw(password.encode('utf-8'), user.password):
+                response = {
+                    "message": "You are now logged in!!",
+                    "status": "success",
+                    "name": user.uname,
+                    "username": user.username,
+                    "email": user.email
+                }
+            else:
+                response = {"message": "Incorrect password", "status": "danger"}
 
         return jsonify(response)
     
@@ -60,8 +116,11 @@ def init_routes(app):
             user = UserModel.query.get(user_id)
 
             if user:
+                # Hash the new password before updating
+                hashed_password = bcrypt.hashpw(new_password.encode('utf-8'), bcrypt.gensalt())
+                
                 # Update the user's password with the new password
-                user.password = new_password
+                user.password = hashed_password
                 db.session.commit()
                 
                 response = {"message": "Password updated successfully", "status": "success"}
