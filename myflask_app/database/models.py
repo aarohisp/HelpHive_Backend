@@ -31,3 +31,18 @@ class ItemModel(db.Model):
     
     # Define the relationship with UserModel
     donor = db.relationship('UserModel', backref='donated_items', foreign_keys=[donor_id])
+
+class OrgModel(db.Model):
+    __tablename__ = 'org'
+    org_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    org_name = db.Column(db.String(100), nullable=False)
+    org_address = db.Column(db.String(255))
+    org_contactno = db.Column(db.String(15))
+
+class ImageModel(db.Model):
+    __tablename__ = 'images'
+    image_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    image_data = db.Column(db.LargeBinary)
+    org_id = db.Column(db.Integer, db.ForeignKey('org.org_id'), nullable=False)
+
+    org = db.relationship('OrgModel', backref='images')
