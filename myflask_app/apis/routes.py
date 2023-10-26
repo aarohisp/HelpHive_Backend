@@ -1,3 +1,4 @@
+import base64
 from flask import request, jsonify, current_app, send_file
 from app import db
 from sqlalchemy import or_
@@ -12,19 +13,50 @@ def init_routes(app):
     def upload_image():
         try:
             org_id = request.form.get("org_id")
+            image_category = request.form.get("image_category")
 
             image_file = request.files["image"]
             if image_file:
                 image_data = image_file.read()
 
-                image = Image.open(BytesIO(image_data))
-
-                new_image = ImageModel(image_data=image_data, org=OrgModel.query.get(org_id))
+                try:
+                    image = Image.open(BytesIO(image_data))
+                except:
+                    return jsonify({"message": "Invalid image format", "status": "error"})
+                
+                new_image = ImageModel(
+                    image_data=image_data,
+                    image_category=image_category, 
+                    org=OrgModel.query.get(org_id))
                 db.session.add(new_image)
                 db.session.commit()
                 return jsonify({"message": "Image uploaded successfully", "status": "success"})
             else:
                 return jsonify({"message": "No image provided", "status": "error"})
+        except Exception as e:
+            return jsonify({"message": "An error occurred", "error": str(e), "status": "error"})
+        
+    @app.route("/api/images/category/<int:image_category_id>", methods=["GET"])
+    def get_images_by_category(image_category_id):
+        try:
+            # Query the database for images with the specified image_category
+            images = ImageModel.query.filter_by(image_category=image_category_id).all()
+            
+            if images:
+                image_list = []
+                
+                for image in images:
+                    # Convert image data to base64
+                    image_data_base64 = base64.b64encode(image.image_data).decode('utf-8')
+                    
+                    image_list.append({
+                        "image_id": image.image_id,
+                        "image_data": image_data_base64,
+                    })
+                
+                return jsonify({"images": image_list, "status": "success"})
+            else:
+                return jsonify({"message": "No images found for the specified category", "status": "error"}), 404
         except Exception as e:
             return jsonify({"message": "An error occurred", "error": str(e), "status": "error"})
 

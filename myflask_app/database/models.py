@@ -58,7 +58,7 @@ class ItemModel(db.Model):
     category_id = db.Column(db.Integer, db.ForeignKey('category.category_id'), nullable=False)
     created_at = db.Column(db.TIMESTAMP, server_default=db.func.current_timestamp())
     item_address = db.Column(db.String(100), nullable=False)
-    image_info = db.Column(db.String(2000), nullable=False)
+    image_info = db.Column(db.Integer, nullable=False)
     specification = db.Column(db.String(100), nullable=False)
     item_check = db.Column(db.Boolean, nullable=False, default=False)
     status_item = db.Column(db.Enum('open', 'closed', 'expired'), nullable=False, default='open')
@@ -70,6 +70,7 @@ class ImageModel(db.Model):
     __tablename__ = 'images'
     image_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     image_data = db.Column(db.LargeBinary)
+    image_category = db.Column(db.Integer, nullable=False)
     org_id = db.Column(db.Integer, db.ForeignKey('org.org_id'), nullable=False)
 
     org = db.relationship('OrgModel', backref='images')
