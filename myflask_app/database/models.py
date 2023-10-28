@@ -1,15 +1,15 @@
 from app import db
 from sqlalchemy import Enum
 
-class RoleModel(db.Model):
-    __tablename__ = 'role'
+# class RoleModel(db.Model):
+#     __tablename__ = 'role'
 
-    role_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    role_name = db.Column(db.String(40), nullable=False)
-    description_role = db.Column(db.String(100))
-    org_id = db.Column(db.Integer, db.ForeignKey('org.org_id'), nullable=False)
+#     role_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+#     role_name = db.Column(db.String(40), nullable=False)
+#     description_role = db.Column(db.String(100))
+#     org_id = db.Column(db.Integer, db.ForeignKey('org.org_id'), nullable=False)
 
-    org = db.relationship('OrgModel', backref='roles')
+#     org = db.relationship('OrgModel', backref='roles')
 
 class UserModel(db.Model):
     __tablename__ = 'UserModel'
@@ -21,12 +21,12 @@ class UserModel(db.Model):
     email = db.Column(db.String(100), unique=True)
     phoneno = db.Column(db.String(15), nullable=False)
     city = db.Column(db.String(40), nullable=False)
-    role_id = db.Column(db.Integer, db.ForeignKey('role.role_id'), nullable=False)
+    # role_id = db.Column(db.Integer, db.ForeignKey('role.role_id'), nullable=False)
     is_deleted = db.Column(db.Boolean, nullable=False, default=False)
-    org_id = db.Column(db.Integer, db.ForeignKey('org.org_id'), nullable=False)
+    # org_id = db.Column(db.Integer, db.ForeignKey('org.org_id'), nullable=False)
 
-    role = db.relationship('RoleModel', backref='users')
-    org = db.relationship('OrgModel', backref='users')
+    # role = db.relationship('RoleModel', backref='users')
+    # org = db.relationship('OrgModel', backref='users')
 
     def __repr__(self):
         return f'<User: {self.email}>'
@@ -46,22 +46,22 @@ class ItemModel(db.Model):
     specification = db.Column(db.String(50), nullable=False)
     item_check = db.Column(db.Boolean, default=False)
     status_item = db.Column(db.Enum('open', 'closed', 'expired', name='status_item_enum'), nullable=False, default='open')
-    org_id = db.Column(db.Integer, nullable=False)
+    # org_id = db.Column(db.Integer, nullable=False)
     
     # Define the relationship with UserModel
     donor = db.relationship('UserModel', backref='donated_items', foreign_keys=[donor_id])
 
-class OrgModel(db.Model):
-    __tablename__ = 'org'
-    org_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    org_name = db.Column(db.String(100), nullable=False)
-    org_address = db.Column(db.String(255))
-    org_contactno = db.Column(db.String(15))
+# class OrgModel(db.Model):
+#     __tablename__ = 'org'
+#     org_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+#     org_name = db.Column(db.String(100), nullable=False)
+#     org_address = db.Column(db.String(255))
+#     org_contactno = db.Column(db.String(15))
 
 class ImageModel(db.Model):
     __tablename__ = 'images'
     image_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     image_data = db.Column(db.LargeBinary)
-    org_id = db.Column(db.Integer, db.ForeignKey('org.org_id'), nullable=False)
+    # org_id = db.Column(db.Integer, db.ForeignKey('org.org_id'), nullable=False)
 
-    org = db.relationship('OrgModel', backref='images')
+    # org = db.relationship('OrgModel', backref='images')

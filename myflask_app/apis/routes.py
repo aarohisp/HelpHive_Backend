@@ -1,7 +1,7 @@
 from flask import request, jsonify, current_app, send_file
 from app import db
 from sqlalchemy import or_
-from database.models import UserModel, ItemModel, OrgModel, ImageModel
+from database.models import UserModel, ItemModel, ImageModel
 import bcrypt
 from io import BytesIO
 from PIL import Image
@@ -11,7 +11,6 @@ def init_routes(app):
     @app.route("/api/upload", methods=["POST"])
     def upload_image():
         try:
-            org_id = request.form.get("org_id")
 
             image_file = request.files["image"]
             if image_file:
@@ -19,7 +18,7 @@ def init_routes(app):
 
                 image = Image.open(BytesIO(image_data))
 
-                new_image = ImageModel(image_data=image_data, org=OrgModel.query.get(org_id))
+                new_image = ImageModel(image_data=image_data)
                 db.session.add(new_image)
                 db.session.commit()
                 return jsonify({"message": "Image uploaded successfully", "status": "success"})
@@ -58,13 +57,11 @@ def init_routes(app):
         username = data.get("username")
         password = data.get("password")
         email = data.get("email")
-        role_id = data.get("role_id")
-        org_id = data.get("org_id")
         phoneno = data.get("phoneno")
         city = data.get("city")
 
         # Input validation
-        if not (name and username and password and email and role_id and org_id and phoneno and city):
+        if not (name and username and password and email and phoneno and city):
             return jsonify({"message": "Missing required fields", "status": "error"})
 
         with app.app_context():  
@@ -73,14 +70,15 @@ def init_routes(app):
             if user_exists is None:
                 hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
-                new_user = UserModel(uname=name, username=username, password=hashed_password, email=email, role_id=role_id, org_id=org_id, phoneno=phoneno, city=city, is_deleted=False)
+                new_user = UserModel(uname=name, username=username, password=hashed_password, email=email, phoneno=phoneno, city=city, is_deleted=False)
                 db.session.add(new_user)
                 db.session.commit()
                 response = {"message": "You are registered and can now login", "status": "success"}
             else:
-                response = {"message": "User already exists, please login or contact admin", "status": "danger"}
+                response = {"message": "User already exists in the database. Please login or contact the admin.", "status": "danger"}
 
         return jsonify(response)
+
 
     @app.route('/api/login', methods=["POST"])
     def login():
