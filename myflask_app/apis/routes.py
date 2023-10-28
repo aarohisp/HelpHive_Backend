@@ -5,13 +5,12 @@ from database.models import UserModel, ItemModel, ImageModel
 import bcrypt
 from io import BytesIO
 from PIL import Image
-
+import json
 
 def init_routes(app):
     @app.route("/api/upload", methods=["POST"])
     def upload_image():
         try:
-
             image_file = request.files["image"]
             if image_file:
                 image_data = image_file.read()
@@ -21,11 +20,13 @@ def init_routes(app):
                 new_image = ImageModel(image_data=image_data)
                 db.session.add(new_image)
                 db.session.commit()
-                return jsonify({"message": "Image uploaded successfully", "status": "success"})
+
+                return jsonify({"message": "Image uploaded successfully", "status": "success", "image_id": new_image.image_id})
             else:
                 return jsonify({"message": "No image provided", "status": "error"})
         except Exception as e:
             return jsonify({"message": "An error occurred", "error": str(e), "status": "error"})
+
 
     @app.route("/api/images/<int:image_id>", methods=["GET"])
     def get_image(image_id):
@@ -130,9 +131,13 @@ def init_routes(app):
         except Exception as e:
             return jsonify({"message": "An error occurred", "error": str(e), "status": "error"}), 500
 
-    @app.route('/api/add_product', methods=['GET'])
+    @app.route('/api/add_product', methods=['POST'])
     def add_product():
-        data = request.json
+        data = request.get_json()
+        print("Received data from frontend:", data)
+
+        if not data:
+            return jsonify({"message": "Invalid JSON data", "status": "error"}), 400
 
         item_name = data.get("item_name")
         descriptions = data.get("descriptions")
@@ -140,11 +145,15 @@ def init_routes(app):
         donor_id = data.get("donor_id")
         category = data.get("category")
         item_address = data.get("item_address")
-        image_info = data.get("image_info")
+        image_info = json.dumps(data.get("image_info"))  # Convert to JSON string
         specification = data.get("specification")
-        org_id = data.get("org_id")
+
+
+        if not all([item_name, descriptions, donor_id, category, item_address, image_info, specification]):
+            return jsonify({"message": "Missing required fields", "status": "error"}), 400
 
         with current_app.app_context():
+            # Create an item and associate it with the provided image_id
             new_item = ItemModel(
                 item_name=item_name,
                 descriptions=descriptions,
@@ -152,9 +161,8 @@ def init_routes(app):
                 donor_id=donor_id,
                 category=category,
                 item_address=item_address,
-                image_info=image_info,
+                image_info=image_info,  # Store image_info as a JSON string
                 specification=specification,
-                org_id=org_id
             )
 
             db.session.add(new_item)
@@ -163,11 +171,12 @@ def init_routes(app):
             response = {
                 "message": "Item is registered in the database",
                 "status": "success",
-                "product id": new_item.item_id,
-                "product name": new_item.item_name
+                "product_id": new_item.item_id,
+                "product_name": new_item.item_name
             }
 
         return jsonify(response)
+
 
     @app.route('/api/get_product/<int:item_id>', methods=['GET'])    
     def get_product(item_id):
@@ -185,12 +194,40 @@ def init_routes(app):
                     "item_address": item.item_address,
                     "image_info": item.image_info,
                     "specification": item.specification,
-                    "org_id": item.org_id
+                    # "org_id": item.org_id
                 }
 
                 return jsonify({"item": item_data, "status": "success"})
             else:
                 return jsonify({"message": "Item not found", "status": "error"}), 404
+
+        except Exception as e:
+            return jsonify({"message": "An error occurred", "error": str(e), "status": "error"}), 500
+
+    @app.route('/api/get_all_products', methods=['GET'])
+    def get_all_products():
+        try:
+            products = ItemModel.query.all()
+
+            if products:
+                product_list = []
+                for item in products:
+                    item_data = {
+                        "item_id": item.item_id,
+                        "item_name": item.item_name,
+                        "descriptions": item.descriptions,
+                        "time_used": item.time_used,
+                        "donor_id": item.donor_id,
+                        "category": item.category,
+                        "item_address": item.item_address,
+                        "image_info": item.image_info,
+                        "specification": item.specification,
+                    }
+                    product_list.append(item_data)
+
+                return jsonify({"products": product_list, "status": "success"})
+            else:
+                return jsonify({"message": "No products found", "status": "error"}), 404
 
         except Exception as e:
             return jsonify({"message": "An error occurred", "error": str(e), "status": "error"}), 500
@@ -237,7 +274,7 @@ def init_routes(app):
                     "item_address": item.item_address,
                     "image_info": item.image_info,
                     "specification": item.specification,
-                    "org_id": item.org_id,
+                    # "org_id": item.org_id,
                 }
                 item_list.append(item_data)
 

@@ -42,26 +42,27 @@ class ItemModel(db.Model):
     category = db.Column(db.Enum('clothes', 'medicine', 'furniture', 'medical supplies', 'school essentials', 'stationery', name='category_enum'), nullable=False)
     created_at = db.Column(db.TIMESTAMP, server_default=db.func.current_timestamp())
     item_address = db.Column(db.String(100), nullable=False)
-    image_info = db.Column(db.String(100), nullable=False)
+    image_info = db.Column(db.ARRAY(db.Integer), nullable=True)
     specification = db.Column(db.String(50), nullable=False)
     item_check = db.Column(db.Boolean, default=False)
     status_item = db.Column(db.Enum('open', 'closed', 'expired', name='status_item_enum'), nullable=False, default='open')
-    # org_id = db.Column(db.Integer, nullable=False)
     
     # Define the relationship with UserModel
     donor = db.relationship('UserModel', backref='donated_items', foreign_keys=[donor_id])
-
-# class OrgModel(db.Model):
-#     __tablename__ = 'org'
-#     org_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-#     org_name = db.Column(db.String(100), nullable=False)
-#     org_address = db.Column(db.String(255))
-#     org_contactno = db.Column(db.String(15))
+    images = db.relationship("ImageModel", secondary="item_image", back_populates="items")
 
 class ImageModel(db.Model):
     __tablename__ = 'images'
     image_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     image_data = db.Column(db.LargeBinary)
-    # org_id = db.Column(db.Integer, db.ForeignKey('org.org_id'), nullable=False)
 
-    # org = db.relationship('OrgModel', backref='images')
+    items = db.relationship("ItemModel", secondary="item_image", back_populates="images")
+
+class ItemImage(db.Model):
+    __tablename__ = 'item_image'
+
+    item_id = db.Column(db.Integer, db.ForeignKey('Item.item_id'), primary_key=True)
+    image_id = db.Column(db.Integer, db.ForeignKey('images.image_id'), primary_key=True)
+    
+    items = db.relationship("ItemModel", backref=db.backref("image_assoc"))
+    images = db.relationship("ImageModel", backref=db.backref("item_assoc"))
